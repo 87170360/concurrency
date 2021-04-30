@@ -1,8 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/sync/errgroup"
+	"github.com/kratos/pkg/sync/errgroup"
 	"net/http"
 )
 
@@ -16,7 +17,7 @@ func main() {
 	for _, url := range urls {
 		// Launch a goroutine to fetch the URL.
 		url := url // https://golang.org/doc/faq#closures_and_goroutines
-		g.Go(func() error {
+		g.Go(func(ctx context.Context) error {
 			// Fetch the URL.
 			resp, err := http.Get(url)
 			if err == nil {
@@ -28,5 +29,7 @@ func main() {
 	// Wait for all HTTP fetches to complete.
 	if err := g.Wait(); err == nil {
 		fmt.Println("Successfully fetched all URLs.")
+	} else {
+		fmt.Println(err)
 	}
 }
