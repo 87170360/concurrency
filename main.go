@@ -7,29 +7,35 @@ import (
 	"net/http"
 )
 
+func serve(ctx context.Context, addr string) error {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		fmt.Fprintf(writer, "Hello from %v", addr)
+	})
+	s := http.Server{Addr: addr, Handler: mux}
+
+	go func() {
+		<-ctx.Done()
+
+	}()
+	return s.ListenAndServe()
+}
+
 func main() {
 	g := new(errgroup.Group)
-	var urls = []string{
-		"http://www.golang.org/",
-		"http://www.google.com/",
-		"http://www.somestupidname.com/",
+	var addrs = []string{
+		"127.0.0.1:8001",
+		"127.0.0.1:8002",
+		"127.0.0.1:8003",
 	}
-	for _, url := range urls {
-		// Launch a goroutine to fetch the URL.
-		url := url // https://golang.org/doc/faq#closures_and_goroutines
+	for _, addr := range addrs {
+		addr := addr
 		g.Go(func(ctx context.Context) error {
-			// Fetch the URL.
-			resp, err := http.Get(url)
-			if err == nil {
-				resp.Body.Close()
-			}
-			return err
+			return serve(ctx, addr)
 		})
 	}
-	// Wait for all HTTP fetches to complete.
-	if err := g.Wait(); err == nil {
-		fmt.Println("Successfully fetched all URLs.")
-	} else {
+
+	if err := g.Wait(); err != nil {
 		fmt.Println(err)
 	}
 }
